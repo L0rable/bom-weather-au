@@ -90,6 +90,8 @@ func UnmarshalXML(data []byte) []*Station {
 }
 
 func main() {
+	searchLocation("3000")
+
 	conn := openFtpServer()
 	obsURL := "/anon/gen/fwo/IDV60920.xml"
 	resp, err := conn.Retr(obsURL)
@@ -102,8 +104,8 @@ func main() {
 		log.Println(data)
 	}
 
-	stnData := UnmarshalXML(data)
-	for _, stn := range stnData {
+	stationData := UnmarshalXML(data)
+	for _, stn := range stationData {
 		log.Println(stn.name)
 	}
 
