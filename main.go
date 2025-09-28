@@ -12,6 +12,26 @@ import (
 
 const FTP_URL = "ftp.bom.gov.au:21"
 
+// Observations - State/Territory summaries (http://www.bom.gov.au/catalogue/data-feeds.shtml)
+const NSW_ACT = "/anon/gen/fwo/IDN60920.xml"
+const NT = "/anon/gen/fwo/IDD60920.xml"
+const QLD = "/anon/gen/fwo/IDQ60920.xml"
+const SA = "/anon/gen/fwo/IDS60920.xml"
+const TAS = "/anon/gen/fwo/IDT60920.xml"
+const VIC = "/anon/gen/fwo/IDV60920.xml"
+const WA = "/anon/gen/fwo/IDW60920.xml"
+
+var AusObservationState = map[string]string{
+	"New South Wales":              NSW_ACT,
+	"Australian Capital Territory": NSW_ACT,
+	"Northern Territory":           NT,
+	"Queensland":                   QLD,
+	"South Australia":              SA,
+	"Tasmania":                     TAS,
+	"Victoria":                     VIC,
+	"Western Australia":            WA,
+}
+
 type ObservationSummary struct {
 	XMLName     xml.Name `xml:"product"`
 	Observation struct {
@@ -92,8 +112,13 @@ func UnmarshalXML(data []byte) []*Station {
 func main() {
 	loc := searchLocation("3000")
 
+	if *loc == (Location{}) {
+		log.Fatalln("Not a valid postcode (main.go)")
+		return
+	}
+
 	conn := openFtpServer()
-	obsURL := "/anon/gen/fwo/IDV60920.xml"
+	obsURL := AusObservationState[loc.state]
 	resp, err := conn.Retr(obsURL)
 	if err != nil {
 		log.Fatal(err)

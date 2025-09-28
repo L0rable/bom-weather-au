@@ -79,6 +79,7 @@ func searchLocation(postcode string) *Location {
 	}
 
 	if len(results) == 0 {
+		log.Println("Postcode is not found on OpenStreetMapApi")
 		return &Location{}
 	}
 
@@ -99,7 +100,7 @@ func searchLocation(postcode string) *Location {
 	location := &Location{
 		postcode:  locationData[0],
 		suburb:    locationData[1],
-		state:     locationData[4],
+		state:     locationData[len(locationData)-2],
 		latitude:  lat,
 		longitude: long,
 	}
