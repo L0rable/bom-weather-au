@@ -46,16 +46,68 @@ type ObservationSummary struct {
 			Longitude          string `xml:"lon,attr"`
 			ForecastDistrictId string `xml:"forecast-district-id,attr"`
 			Description        string `xml:"description,attr"`
+			Period             struct {
+				Level struct {
+					BasicElement []struct {
+						Text           string `xml:",chardata"`
+						Units          string `xml:"units,attr"`
+						Type           string `xml:"type,attr"`
+						StartTimeLocal string `xml:"start-time-local,attr"`
+						EndTimeLocal   string `xml:"end-time-local,attr"`
+						Duration       string `xml:"duration,attr"`
+						StartTimeUtc   string `xml:"start-time-utc,attr"`
+						EndTimeUtc     string `xml:"end-time-utc,attr"`
+						Instance       string `xml:"instance,attr"`
+						TimeUtc        string `xml:"time-utc,attr"`
+						TimeLocal      string `xml:"time-local,attr"`
+					} `xml:"element"`
+				} `xml:"level"`
+			} `xml:"period"`
 		} `xml:"station"`
 	} `xml:"observations"`
 }
 
+type BasicElement struct {
+	Units string
+	Type  string
+	Value string
+}
+
+type Element struct {
+	StartTimeLocal string
+	EndTimeLocal   string
+	Duration       string
+	StartTimeUTC   string
+	EndTimeUTC     string
+
+	Units string
+	Type  string
+	Value string
+}
+
 type Station struct {
+	// station tag
 	name        string
 	description string
 	timezone    string
 	latitude    float64
 	longitude   float64
+	// element tag (elements)
+	ApparentTemp BasicElement
+	DeltaTemp    BasicElement
+	GustKmh      BasicElement
+	WindGustSpd  BasicElement
+	AirTemp      BasicElement
+	DewPoint     BasicElement
+	Pres         BasicElement
+	MslPres      BasicElement
+	QnhPres      BasicElement
+	RelHumidity  BasicElement
+	VisKm        BasicElement
+	WindDir      string
+	WindDirDeg   BasicElement
+	WindSpdKmh   BasicElement
+	WindSpd      BasicElement
 }
 
 func openFtpServer() *ftp.ServerConn {
@@ -96,12 +148,40 @@ func UnmarshalXML(data []byte) []*Station {
 			return stations
 		}
 
+		// elements := map[string]string{}
+		elements := map[string]BasicElement{}
+		for _, e := range summaryStation.Period.Level.BasicElement {
+			if e.Type != "" {
+				elements[e.Type] = BasicElement{
+					Units: e.Units,
+					Type:  e.Type,
+					Value: e.Text,
+				}
+			}
+		}
+
 		stn := &Station{
 			name:        summaryStation.StandardName,
 			description: summaryStation.Description,
 			timezone:    summaryStation.Timezone,
 			latitude:    lat,
 			longitude:   long,
+			// values form elements can be store in Station
+			ApparentTemp: elements["apparent_temp"],
+			DeltaTemp:    elements["delta_t"],
+			GustKmh:      elements["gust_kmh"],
+			WindGustSpd:  elements["wind_gust_spd"],
+			AirTemp:      elements["air_temperature"],
+			DewPoint:     elements["dew_point"],
+			Pres:         elements["pres"],
+			MslPres:      elements["msl_pres"],
+			QnhPres:      elements["qnh_pres"],
+			RelHumidity:  elements["rel-humidity"],
+			VisKm:        elements["vis_km"],
+			WindDir:      elements["wind_dir"].Value,
+			WindDirDeg:   elements["wind_dir_deg"],
+			WindSpdKmh:   elements["wind_spd_kmh"],
+			WindSpd:      elements["wind_spd"],
 		}
 		stations = append(stations, stn)
 	}
@@ -131,7 +211,7 @@ func main() {
 
 	stnData := UnmarshalXML(data)
 	stn := getClosetStation(loc, stnData)
-	log.Println("closets station: ", stn)
+	log.Println("closets station:", stn)
 
 	closeFtpServer(conn)
 }
