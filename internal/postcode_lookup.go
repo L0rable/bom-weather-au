@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"encoding/json"
@@ -20,14 +20,14 @@ type GeoSearchResult struct {
 }
 
 type Location struct {
-	postcode  string
-	suburb    string
-	state     string
-	latitude  float64
-	longitude float64
+	Postcode  string
+	Suburb    string
+	State     string
+	Latitude  float64
+	Longitude float64
 }
 
-func checkAusPostcode(postcode string) string {
+func CheckAusPostcode(postcode string) string {
 	_, err := strconv.Atoi(postcode)
 	if err != nil {
 		log.Println("Err:", err, "checkAusPostcode (location.go)")
@@ -44,8 +44,8 @@ func checkAusPostcode(postcode string) string {
 	return postcode
 }
 
-func searchLocation(postcode string) *Location {
-	postcode = checkAusPostcode(postcode)
+func SearchLocation(postcode string) *Location {
+	postcode = CheckAusPostcode(postcode)
 	if postcode == "" {
 		log.Println("Err: Invalid postcode", postcode)
 		return &Location{}
@@ -98,11 +98,11 @@ func searchLocation(postcode string) *Location {
 	}
 
 	location := &Location{
-		postcode:  locationData[0],
-		suburb:    locationData[1],
-		state:     locationData[len(locationData)-2],
-		latitude:  lat,
-		longitude: long,
+		Postcode:  locationData[0],
+		Suburb:    locationData[1],
+		State:     locationData[len(locationData)-2],
+		Latitude:  lat,
+		Longitude: long,
 	}
 
 	return location

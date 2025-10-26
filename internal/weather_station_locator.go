@@ -1,12 +1,12 @@
-package main
+package internal
 
 import "math"
 
 const EARTH_RADIUS = 6371
 
 func haversine(loc *Location, stn *Station) float64 {
-	lat1 := loc.latitude * math.Pi / 180
-	lon1 := loc.longitude * math.Pi / 180
+	lat1 := loc.Latitude * math.Pi / 180
+	lon1 := loc.Longitude * math.Pi / 180
 	lat2 := stn.latitude * math.Pi / 180
 	lon2 := stn.longitude * math.Pi / 180
 
@@ -18,7 +18,7 @@ func haversine(loc *Location, stn *Station) float64 {
 	return EARTH_RADIUS * c
 }
 
-func getClosetStation(loc *Location, stns []*Station) *Station {
+func GetClosetStation(loc *Location, stns []*Station) *Station {
 	var closetStn *Station
 
 	minDistance := math.MaxFloat64
