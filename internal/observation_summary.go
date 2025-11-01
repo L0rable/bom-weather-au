@@ -2,14 +2,10 @@ package internal
 
 import (
 	"encoding/xml"
+	"io"
 	"log"
 	"strconv"
-	"time"
-
-	"github.com/jlaffaye/ftp"
 )
-
-const FTP_URL = "ftp.bom.gov.au:21"
 
 // Observations - State/Territory summaries (http://www.bom.gov.au/catalogue/data-feeds.shtml)
 const NSW_ACT = "/anon/gen/fwo/IDN60920.xml"
@@ -109,26 +105,6 @@ type Station struct {
 	WindSpd      BasicElement
 }
 
-func OpenFtpServer() *ftp.ServerConn {
-	conn, err := ftp.Dial(FTP_URL, ftp.DialWithTimeout(5*time.Second))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = conn.Login("anonymous", "")
-	if err != nil {
-		log.Fatal(err)
-	}
-	return conn
-}
-
-func CloseFtpServer(conn *ftp.ServerConn) {
-	err := conn.Quit()
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 func UnmarshalXML(data []byte) []*Station {
 	var obsSummary *ObservationSummary
 	err := xml.Unmarshal([]byte(data), &obsSummary)
@@ -186,4 +162,32 @@ func UnmarshalXML(data []byte) []*Station {
 	}
 
 	return stations
+}
+
+func GetObservationSummary(postcode string) *Station {
+	loc := SearchLocation(postcode)
+	if *loc == (Location{}) {
+		log.Fatalln("Not a valid postcode (main.go)")
+		return &Station{}
+	}
+
+	conn := OpenFtpServer()
+	obsURL := AusObservationState[loc.State]
+	resp, err := conn.Retr(obsURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	data, err := io.ReadAll(resp)
+	if err != nil {
+		log.Println(data)
+	}
+
+	stnData := UnmarshalXML(data)
+	stn := GetClosetStation(loc, stnData)
+	log.Println("closets station:", stn)
+
+	CloseFtpServer(conn)
+
+	return stn
 }
